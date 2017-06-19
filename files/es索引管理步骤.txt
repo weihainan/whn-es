@@ -1,0 +1,50 @@
+1、新建索引
+post：http://192.168.85.41:8080/v0.1/applications/{application}/es/index/{version}
+
+当前index版本为01，即master-planner_{version}
+
+2、设置mapping
+post：http://192.168.85.41:8080/v0.1/applications/{application}/es/project/mapping/{version}
+
+当前index版本为01，即master-planner_{version}
+maping文件参考个应用下的mapping_with_dynamic.json
+
+3、刷数据到master-planner_01
+put：http://192.168.85.41:8080/v0.1/applications/{application}/es/revert/{version}
+当前index版本为01，即master-planner_{version}
+规则文件参考个应用下的extract_regular_revert.json
+
+4、查看别名对应的index
+get：http://192.168.85.41:8080/v0.1/applications/es/aliases/{application}
+
+注：记住对应的index，后续可以拿来删除用，步骤5也需要用到
+
+5、别名处理（这里要真实的索引）
+post: http://192.168.85.41:8080/v0.1/applications/es/aliases
+ {
+    "actions": [
+        {"remove": {"index": "步骤4获取到的旧版本index", "alias": "{application}|{application}_custom"}},
+        {"add": {"index":"本次建立的index({application_version})", "alias": "{application}|{application}_custom"}}
+    ]
+}
+注意：
+1）这里确保原来的索引在别名中去除，否则保存及索引数据等会出现问题
+2）确保新索引数据已经没问题了，否则就得回滚，反向执行此步骤，恢复原来的状态
+
+
+6、删除原来的索引（删除前确保新索引数据已经没问题了，否则就得回滚，反向执行步骤5）
+delete：http://192.168.85.41:8080/v0.1/applications/{application}/es/index/{version}
+
+
+7、如果为了确保数据不丢失，再刷一次数据到新索引（这里只需要刷新操作时间段内的这段时间产生的数据就可以了）----可以不执行
+put：http://192.168.85.41:8080/v0.1/applications/{application}/es/revert/{version}?beginTime=1487912400000
+执行步骤3，带上开始时间参数
+
+--------------------------------------------------custom---------------------------------------------------------
+
+以下为custom的mapping维护和索引建立。索引形式为master-planner_{version}_custom。默认后缀加了_custom，在别名处理时候（步骤5）要特别注意
+索引：
+1、http://192.168.85.41:8080/v0.1/applications/{application}/es/index/custom/{version}
+mapping：
+2、http://192.168.85.41:8080/v0.1/applications/{application}/es/{type}/mapping/custom/{version}
+3、步骤4、5、6、7
