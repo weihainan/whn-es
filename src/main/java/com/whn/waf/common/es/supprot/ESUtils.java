@@ -3,7 +3,9 @@ package com.whn.waf.common.es.supprot;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
+import com.whn.waf.common.base.constant.ErrorCode;
 import com.whn.waf.common.es.domain.ESCommonDomain;
+import com.whn.waf.common.exception.WafBizException;
 import com.whn.waf.common.support.PageableItems;
 import com.whn.waf.common.support.WafJsonMapper;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -29,6 +31,15 @@ public class ESUtils {
 
     public static PageableItems<Object> getDataItems(Object object) {
         return PageableItems.of(getDataList(object), getTotal(object));
+    }
+
+    public static Map buildMap(BoolQueryBuilder queryBuilder) {
+        try {
+            return WafJsonMapper.parse(queryBuilder.toString(), HashMap.class);
+        } catch (IOException e1) {
+            logger.info("data deserialize error.", e1);
+            throw WafBizException.of(ErrorCode.INVALID_QUERY);
+        }
     }
 
     /**
@@ -135,9 +146,7 @@ public class ESUtils {
 
     // 解决因为字段全是数字不分词导致查询不到结果的问题
     public static BoolQueryBuilder buildMatchQuery(String field, String value) {
-        return QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(field, value))
-                .should(QueryBuilders.wildcardQuery(String.format("%s", field), String.format("*%s*", value)))
-                .should(QueryBuilders.wildcardQuery(String.format("%s.raw", field), String.format("*%s*", value)));
+        return QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(field, value)).should(QueryBuilders.wildcardQuery(String.format("%s", field), String.format("*%s*", value))).should(QueryBuilders.wildcardQuery(String.format("%s.raw", field), String.format("*%s*", value)));
     }
 
     private ESUtils() {
