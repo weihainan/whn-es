@@ -42,6 +42,25 @@ public class ESUtils {
         }
     }
 
+    public static Map<String, Object> buildAggs(String field, int size) {
+        Map fields = new HashMap();
+        if (field.startsWith("indexes.")) {
+            fields.put("field", field);
+        } else {
+            fields.put("field", "indexes." + field);
+        }
+        if (size < 0) {
+            fields.put("size", Integer.MAX_VALUE);
+        } else {
+            fields.put("size", size);
+        }
+        Map terms = new HashMap();
+        terms.put("terms", fields);
+        Map aggs = new HashMap();
+        aggs.put("result", terms);
+        return aggs;
+    }
+
     /**
      * 从ES的查询结果中获取总数
      *
