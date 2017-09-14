@@ -90,7 +90,9 @@ public class EsCommonService {
             //不报错说明有
             EsConstants.addKey(ESProvider.getIndex(), ESProvider.getType());
         }
-        return eSCommonRepository.save(esDomain);
+        ESCommonDomain rs = eSCommonRepository.save(esDomain);
+        eSCommonRepository.refresh(ESProvider.getIndex());
+        return rs;
     }
 
     public void deleteByQuery(String index, String type, CustomListParam listParam) {
