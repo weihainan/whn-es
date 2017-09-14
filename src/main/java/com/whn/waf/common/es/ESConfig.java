@@ -74,6 +74,7 @@ public class ESConfig {
     public Client client() {
         Settings settings = Settings.settingsBuilder()
                 .put("cluster.name", clusterName)
+                .put("client.transport.sniff", true)
                 .build();
         TransportClient client = TransportClient.builder().settings(settings).build();
         TransportAddress address;
